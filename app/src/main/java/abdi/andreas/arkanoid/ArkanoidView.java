@@ -4,6 +4,10 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -19,6 +23,10 @@ public class ArkanoidView extends SurfaceView implements Runnable {
 
     volatile boolean running;
 
+    private final SensorManager sensorManager;
+    private final Sensor sensor;
+    private final SensorEventListener sensorEventListener;
+
     Canvas canvas;
     Paint paint;
 
@@ -27,10 +35,18 @@ public class ArkanoidView extends SurfaceView implements Runnable {
         surfaceHolder = getHolder();
         paint = new Paint();
 
+        sensorManager = (SensorManager)context.getSystemService(Context.SENSOR_SERVICE);
+        sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+
+
         DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
         int screenX = displayMetrics.widthPixels;
         int screenY = displayMetrics.heightPixels;
+
         gameModel = new GameModel(screenX, screenY);
+        sensorEventListener = new ArkanoidSensorListener(gameModel);
+        sensorManager.registerListener(sensorEventListener, sensor, SensorManager.SENSOR_DELAY_GAME);
+
     }
 
     @Override
@@ -39,10 +55,6 @@ public class ArkanoidView extends SurfaceView implements Runnable {
             gameModel.run();
             draw();
         }
-    }
-
-    public void update() {
-
     }
 
     public void draw() {
@@ -76,7 +88,26 @@ public class ArkanoidView extends SurfaceView implements Runnable {
     public boolean onTouchEvent(MotionEvent event) {
 
         return gameModel.handleMotionEvent(event);
+        //
     }
 
+    private class ArkanoidSensorListener implements SensorEventListener {
+
+        GameModel model;
+
+        public ArkanoidSensorListener(GameModel model) {
+            this.model = model;
+        }
+
+        @Override
+        public void onSensorChanged(SensorEvent event) {
+            model.handleSensorEvent(event);
+        }
+
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+            //not implemented
+        }
+    }
 
 }

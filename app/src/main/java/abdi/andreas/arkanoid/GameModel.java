@@ -2,6 +2,7 @@ package abdi.andreas.arkanoid;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.hardware.SensorEvent;
 import android.view.MotionEvent;
 
 import java.util.ArrayList;
@@ -73,18 +74,40 @@ public class GameModel {
 
     public boolean handleMotionEvent(MotionEvent event) {
         switch(event.getAction() & MotionEvent.ACTION_MASK) {
+            /**
+             *
+             */
+
+
             case MotionEvent.ACTION_DOWN:
-                paused = false;
+                if(paused == true) {
+                    paused = false;
+                }
+                paddleCollection.get(0).setState(Paddle.State.STOPPED);
+                //paddleCollection.get(0).setState(Paddle.State.STOPPED);
+                /**
                 if(event.getX() > screenX/2) {
                     paddleCollection.get(0).setState(Paddle.State.RIGHT);
                 } else {
                     paddleCollection.get(0).setState(Paddle.State.LEFT);
                 }
-
+                 */
                 break;
             case MotionEvent.ACTION_UP:
-                paddleCollection.get(0).setState(Paddle.State.STOPPED);
+                //
                 break;
+        }
+        return true;
+    }
+
+    public boolean handleSensorEvent(SensorEvent event) {
+        float x = event.values[1];
+        if(x > 0.05) {
+            paddleCollection.get(0).setState(Paddle.State.RIGHT);
+        } else if (x < -0.05) {
+            paddleCollection.get(0).setState(Paddle.State.LEFT);
+        } else {
+            paddleCollection.get(0).setState(Paddle.State.STOPPED);
         }
         return true;
     }
