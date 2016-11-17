@@ -30,7 +30,7 @@ public class Paddle implements GameObject {
         topY = screenY - 20;
 
         rectangle = new RectF(topX, topY, topX + width, topY + height);
-        paddleSpeed = 2000;
+        paddleSpeed = 12000;
 
         maxLeft = 0;
         maxRight = screenX;
@@ -56,6 +56,10 @@ public class Paddle implements GameObject {
         }
         rectangle.left = topX;
         rectangle.right = topX + width;
+    }
+
+    public RectF getRectangle() {
+        return rectangle;
     }
 
     @Override

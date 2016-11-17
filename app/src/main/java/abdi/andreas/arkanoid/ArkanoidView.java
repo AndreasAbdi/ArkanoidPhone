@@ -74,8 +74,8 @@ public class ArkanoidView extends SurfaceView implements Runnable {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        gameModel.handleMotionEvent(event);
-        return super.onTouchEvent(event);
+
+        return gameModel.handleMotionEvent(event);
     }
 
 

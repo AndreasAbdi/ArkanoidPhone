@@ -1,23 +1,21 @@
 package abdi.andreas.arkanoid;
 
-import java.lang.reflect.Array;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 
-public class GameObjectCollection<T extends GameObject> {
-    private T[] t;
-    int size;
+import java.util.ArrayList;
 
-    public GameObjectCollection(int size, Class<T> c) {
-        final T[] array = (T[]) Array.newInstance(c, size);
-        this.t = array;
-        this.size = size;
+public class GameObjectCollection<T extends GameObject> extends ArrayList<T> {
+
+    public void draw(Canvas canvas, Paint paint) {
+        for(GameObject object : this) {
+            object.draw(canvas, paint);
+        }
     }
 
-    public T getInstance(int index) {
-        return t[index];
+    public void update(long fps) {
+        for(GameObject object : this) {
+            object.update(fps);
+        }
     }
-
-    public void setInstance(int index, T object) {
-        t[index] = object;
-    }
-
 }

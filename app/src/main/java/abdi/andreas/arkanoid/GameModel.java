@@ -4,32 +4,33 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.view.MotionEvent;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 
 public class GameModel {
-    private HashMap<String, GameObjectCollection> collections =  new HashMap<>();
+    private ArrayList<GameObjectCollection> collections =  new ArrayList<>();
 
-    private static final String PADDLE_KEY = "paddle";
-    private static final String BRICK_KEY = "brick";
-    private static final String BALL_KEY = "ball";
+    private GameObjectCollection<Paddle> paddleCollection = new GameObjectCollection<>();
+    private GameObjectCollection<Brick> brickCollection = new GameObjectCollection<>();
+    private GameObjectCollection<Ball> ballCollection = new GameObjectCollection<>();
+    private GameObjectCollection<Score> scoreCollection = new GameObjectCollection<>();
+    private GameObjectCollection<Life> lifeCollection = new GameObjectCollection<>();
 
-    int score;
-    int lives;
-    int screenX;
-    int screenY;
+    private int screenX;
+    private int screenY;
     boolean paused = true;
 
-    long fps;
+    private static final int numberRowsBricks = 3;
+    private static final int numberColsBricks = 8;
+    private long fps;
     private long timeElapsedInFrame;
 
     public GameModel(int screenX, int screenY) {
-        //add the ball, bricks, and paddle.
-        GameObjectCollection<Paddle> paddleCollection = new GameObjectCollection<>(1, Paddle.class);
-        GameObjectCollection<Brick> brickCollection = new GameObjectCollection<>(100, Brick.class);
-        GameObjectCollection<Ball> ballCollection = new GameObjectCollection<>(1, Ball.class);
-        collections.put(PADDLE_KEY, paddleCollection);
-        collections.put(BRICK_KEY, brickCollection);
-        collections.put(BALL_KEY, ballCollection);
+        collections.add(paddleCollection);
+        collections.add(brickCollection);
+        collections.add(ballCollection);
+        collections.add(scoreCollection);
+        collections.add(lifeCollection);
+
         this.screenX = screenX;
         this.screenY = screenY;
         initializeData();
@@ -49,57 +50,104 @@ public class GameModel {
     }
 
     public void update() {
-        collections.get(PADDLE_KEY).getInstance(0).update(fps);
-        collections.get(BALL_KEY).getInstance(0).update(fps);
+        for(GameObjectCollection collection : collections) {
+            collection.update(fps);
+        }
+
+        handleObjectCollisions();
+        handleTerminationConditions();
+
+    }
+
+    private void resetGame() {
+        paused = true;
+        initializeData();
     }
 
     public void initializeData() {
-        Paddle paddle = new Paddle(screenX,screenY);
-        collections.get(PADDLE_KEY).setInstance(0, paddle);
-        Ball ball = new Ball(screenX, screenY);
-        ball.reset(screenX, screenY);
-        collections.get(BALL_KEY).setInstance(0,ball);
-        Brick brick;
-
-        int brickWidth = screenX / 8;
-        int brickHeight = screenY / 10;
-        int brickIndex = 0;
-        for(int row = 0; row < 3; row++) {
-            for(int col = 0; col < 8; col++) {
-                brick = new Brick(row, col, brickWidth, brickHeight);
-                collections.get(BRICK_KEY).setInstance(brickIndex, brick);
-                brickIndex++;
-            }
+        for(GameObjectCollection collection : collections) {
+            collection.clear();
         }
+        addDefaultObjects();
     }
 
-    public void handleMotionEvent(MotionEvent event) {
+    public boolean handleMotionEvent(MotionEvent event) {
         switch(event.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:
                 paused = false;
                 if(event.getX() > screenX/2) {
-                    ((Paddle)collections.get(PADDLE_KEY).getInstance(0)).setState(Paddle.State.RIGHT);
+                    paddleCollection.get(0).setState(Paddle.State.RIGHT);
                 } else {
-                    ((Paddle)collections.get(PADDLE_KEY).getInstance(0)).setState(Paddle.State.LEFT);
+                    paddleCollection.get(0).setState(Paddle.State.LEFT);
                 }
+
                 break;
             case MotionEvent.ACTION_UP:
-                ((Paddle)collections.get(PADDLE_KEY).getInstance(1)).setState(Paddle.State.STOPPED);
+                paddleCollection.get(0).setState(Paddle.State.STOPPED);
                 break;
         }
+        return true;
     }
 
     public void draw(Canvas canvas, Paint paint) {
-        for(GameObjectCollection collection : collections.values()) {
-            for(int index = 0; index < collection.size; index++) {
-
-                GameObject instance = collection.getInstance(index);
-                if(instance != null) {
-                    instance.draw(canvas, paint);
-                }
-            }
+        for(GameObjectCollection collection : collections) {
+            collection.draw(canvas, paint);
         }
     }
 
+    private void addDefaultObjects() {
+        Paddle paddle = new Paddle(screenX,screenY);
+        paddleCollection.add(paddle);
+        Ball ball = new Ball(screenX, screenY);
+        ball.reset(screenX, screenY);
+        ballCollection.add(ball);
 
+        Brick brick;
+        int brickWidth = screenX / numberColsBricks;
+        int brickHeight = screenY / 10;
+        int brickIndex = 0;
+        for(int row = 0; row < numberRowsBricks; row++) {
+            for(int col = 0; col < numberColsBricks; col++) {
+                brick = new Brick(row, col, brickWidth, brickHeight);
+                brickCollection.add(brickIndex, brick);
+                brickIndex++;
+            }
+        }
+
+        Score score = new Score();
+        scoreCollection.add(0, score);
+        Life life = new Life();
+        lifeCollection.add(0, life);
+    }
+
+    private void handleObjectCollisions() {
+        Ball ball = ballCollection.get(0);
+        Paddle paddle = paddleCollection.get(0);
+        Life life = lifeCollection.get(0);
+        Score score = scoreCollection.get(0);
+
+        //TODO: should do double intersection instead?
+        for(Brick brick : brickCollection) {
+            if(ball.intersects(brick)) {
+                score.score += 10;
+            }
+        }
+        ball.intersects(paddle);
+        //TODO: generalize walls to gameObjects. then change intersects to methods taking walls.
+        if(ball.intersectsBottom()) {
+            life.reduceLife();
+        }
+        ball.intersectsRight();
+        ball.intersectsLeft();
+        ball.intersectsTop();
+    }
+
+    private void handleTerminationConditions() {
+        Life life = lifeCollection.get(0);
+        Score score = scoreCollection.get(0);
+
+        if(score.score == 10 * numberRowsBricks * numberColsBricks || life.getLife() == 0) {
+            resetGame();
+        }
+    }
 }

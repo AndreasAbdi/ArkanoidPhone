@@ -8,11 +8,11 @@ import android.graphics.RectF;
 public class Brick implements GameObject {
     private RectF rectangle;
 
-    private boolean isVisible;
+    private boolean visible;
 
     public Brick(int row, int column, int width, int height){
 
-        isVisible = true;
+        visible = true;
 
         int padding = 1;
 
@@ -27,21 +27,26 @@ public class Brick implements GameObject {
     }
 
     public void setInvisible(){
-        isVisible = false;
+        visible = false;
     }
 
-    public boolean getVisibility(){
-        return isVisible;
+    public boolean isVisible(){
+        return visible;
+    }
+
+    public RectF getRectangle() {
+        return rectangle;
     }
 
     @Override
     public void draw(Canvas canvas, Paint paint) {
-        if(isVisible) {
+        if(visible) {
             paint.setColor(Color.argb(255, 249, 129, 0));
             canvas.drawRect(rectangle, paint);
         }
 
     }
+
 
     @Override
     public void update(long fps) {

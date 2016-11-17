@@ -13,12 +13,15 @@ public class Ball implements GameObject {
     private float yVelocity;
     private float ballHeight = 30;
     private float ballWidth = 30;
-
+    private float screenX;
+    private float screenY;
 
     public Ball(int screenX, int screenY) {
-        yVelocity = -4000;
-        xVelocity = 2000;
+        yVelocity = -8000;
+        xVelocity = 4000;
         rectangle = new RectF();
+        this.screenX = screenX;
+        this.screenY = screenY;
     }
 
     public void reverseYVelocity(){
@@ -53,6 +56,67 @@ public class Ball implements GameObject {
         rectangle.top = y - 20;
         rectangle.right = x / 2 + ballWidth;
         rectangle.bottom = y - 20 - ballHeight;
+    }
+
+    public RectF getRectangle() {
+        return rectangle;
+    }
+
+    public boolean intersects(Paddle paddle) {
+        if (RectF.intersects(paddle.getRectangle(), rectangle)) {
+            this.setRandomXVelocity();
+            this.reverseYVelocity();
+            this.clearObstacleY(paddle.getRectangle().top);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean intersects(Brick brick) {
+        if (RectF.intersects(brick.getRectangle(), this.getRectangle()) && brick.isVisible()) {
+            brick.setInvisible();
+            this.reverseYVelocity();
+            return true;
+        }
+        return false;
+    }
+
+
+    public boolean intersectsTop() {
+        if (rectangle.top >= 0) {
+            return false;
+        }
+        reverseYVelocity();
+        clearObstacleY(ballHeight + 2);
+        return true;
+    }
+
+    public boolean intersectsBottom() {
+        if (this.rectangle.bottom <= screenY) {
+            return false;
+        }
+
+        this.reverseYVelocity();
+        this.clearObstacleY(screenY - 2);
+        return true;
+    }
+
+    public boolean intersectsLeft() {
+        if (rectangle.left >= 0) {
+            return false;
+        }
+        reverseXVelocity();
+        clearObstacleX(2);
+        return true;
+    }
+
+    public boolean intersectsRight() {
+        if (rectangle.right <= screenX) {
+            return false;
+        }
+        reverseXVelocity();
+        clearObstacleX(screenX - ballWidth - 2);
+        return true;
     }
 
     @Override
