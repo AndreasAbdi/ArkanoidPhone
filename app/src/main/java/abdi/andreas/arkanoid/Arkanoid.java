@@ -1,13 +1,32 @@
 package abdi.andreas.arkanoid;
 
-import android.support.v7.app.AppCompatActivity;
+import android.app.Activity;
 import android.os.Bundle;
+import android.view.WindowManager;
 
-public class Arkanoid extends AppCompatActivity {
+public class Arkanoid extends Activity {
+
+    ArkanoidView view;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_arkanoid);
+        view = new ArkanoidView(this);
+        setContentView(view);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        view.pause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        view.resume();
     }
 }
